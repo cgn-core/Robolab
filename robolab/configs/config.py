@@ -18,6 +18,7 @@ class Hyperparameters(BaseModel):
     checkpoint_dir: str = "checkpoints"
     random_seed: int | None = 42
     num_classes: int = Field(ge=1, default=10)
+    early_stopping_patience: int = Field(ge=1, default=5)
 
 
 class TrainingParams(BaseModel):
@@ -32,7 +33,7 @@ class TrainingParams(BaseModel):
 
     batch_size: int = 100
     learning_rate: float = Field(gt=0.0, default=1e-3)
-    num_epochs: int = Field(ge=1, default=10)
+    num_epochs: int = Field(ge=1, default=50)
     dtype: Literal["float32", "float16", "float64", "int32", "int64"] = "float32"
 
 

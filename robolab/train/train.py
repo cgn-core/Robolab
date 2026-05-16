@@ -3,10 +3,67 @@
 import torch
 import torch.nn as nn
 
-from robolab.configs import Hyperparameters
-from robolab.data import get_train_loader
+from robolab.configs import Hyperparameters, TrainingParams
+from robolab.data import train_loader, val_loader
 from robolab.models import ConvNet
-from robolab.utils import get_device, logger
+from robolab.utils import get_device, logger, total_params
+
+
+class EarlyStopping:
+    """Early stopping utility to prevent overfitting.
+
+    Saves the best model checkpoint based on validation accuracy.
+    Stops training when accuracy hasn't improved for 'patience' epochs.
+    """
+
+    def __init__(self, patience: int = 5, min_delta: float = 0.0):
+        """
+        Args:
+            patience: Number of epochs to wait for improvement before stopping.
+            min_delta: Minimum change in the monitored metric to qualify as an improvement.
+        """
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.checkpoint_path = None
+
+    def __call__(self, model: nn.Module, score: float, checkpoint_dir: str) -> None:
+        """
+        Args:
+            model: The model to save checkpoints for.
+            score: The validation accuracy score.
+            checkpoint_dir: Directory to save checkpoints.
+        """
+        if self.best_score is None:
+            self.best_score = score
+            self.checkpoint_path = self.save_checkpoint(
+                model=model, checkpoint_dir=checkpoint_dir
+            )
+            logger.info(f"New best validation accuracy: {score:.2f}%")
+
+        elif score > self.best_score + self.min_delta:
+            self.best_score = score
+            self.checkpoint_path = self.save_checkpoint(
+                model=model, checkpoint_dir=checkpoint_dir
+            )
+            self.counter = 0
+            logger.info(f"New best validation accuracy: {score:.2f}%")
+
+        else:
+            self.counter += 1
+            logger.info(f"EarlyStopping counter: {self.counter} out of {self.patience}")
+            if self.counter >= self.patience:
+                self.early_stop = True
+                logger.info("Early stopping triggered.")
+
+    def save_checkpoint(self, model: nn.Module, checkpoint_dir: str) -> str:
+        """Save the model checkpoint and return the checkpoint path."""
+        checkpoint_path = f"{checkpoint_dir}/model.ckpt"
+        torch.save(model.state_dict(), checkpoint_path)
+        logger.info(f"Checkpoint saved to {checkpoint_path}")
+        return checkpoint_path
 
 
 def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> None:
@@ -16,33 +73,33 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
         checkpoint_dir: Directory to save model checkpoints.
         data_root: Root directory for dataset storage.
     """
-    cfg = Hyperparameters()
+    # Create fresh early stopping instance for each training run
+    early_stopping = EarlyStopping(patience=Hyperparameters().early_stopping_patience)
     device = get_device()
 
     # Set random seed for reproducibility
-    if cfg.random_seed is not None:
-        torch.manual_seed(cfg.random_seed)
+    if Hyperparameters().random_seed is not None:
+        torch.manual_seed(Hyperparameters().random_seed)
         if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(cfg.random_seed)
-
-    # Data
-    train_loader = get_train_loader(data_root=data_root)
+            torch.cuda.manual_seed_all(Hyperparameters().random_seed)
 
     # Model
-    model = ConvNet(num_classes=cfg.num_classes).to(
-        device, dtype=getattr(torch, cfg.dtype)
+    model = ConvNet(num_classes=Hyperparameters().num_classes).to(
+        device, dtype=getattr(torch, TrainingParams().dtype)
     )
+    logger.info(f"total_params: {total_params(model):,}")
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=TrainingParams().learning_rate)
 
     total_step = len(train_loader)
-    for epoch in range(cfg.num_epochs):
+    for epoch in range(TrainingParams().num_epochs):
+        # Training loop
         model.train()
         for i, (images, labels) in enumerate(train_loader):
             images = images.reshape(-1, 3, 32, 32).to(
-                device, dtype=getattr(torch, cfg.dtype)
+                device, dtype=getattr(torch, TrainingParams().dtype)
             )
             labels = labels.to(device)
 
@@ -57,13 +114,33 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
 
             if (i + 1) % 100 == 0:
                 logger.info(
-                    f"Epoch [{epoch + 1}/{cfg.num_epochs}], "
+                    f"Epoch [{epoch + 1}/{TrainingParams().num_epochs}], "
                     f"Step [{i + 1}/{total_step}], Loss: {loss.item():.4f}"
                 )
 
-    # Save checkpoint
-    torch.save(model.state_dict(), f"{checkpoint_dir}/model.ckpt")
-    logger.info(f"Checkpoint saved to {checkpoint_dir}/model.ckpt")
+        # Validation
+        model.eval()
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            for images, labels in val_loader:
+                images = images.reshape(-1, 3, 32, 32).to(
+                    device, dtype=getattr(torch, TrainingParams().dtype)
+                )
+                labels = labels.to(device)
+                outputs = model(images)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+        val_accuracy = 100.0 * correct / total if total > 0 else 0.0
+        logger.info(
+            f"Validation Accuracy of the model on the {total} validation images: "
+            f"{val_accuracy:.2f} %"
+        )
+        early_stopping(model, val_accuracy, checkpoint_dir)
+        if early_stopping.early_stop:
+            break
 
 
 if __name__ == "__main__":

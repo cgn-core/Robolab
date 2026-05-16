@@ -7,6 +7,8 @@ v0.1.3
 [x] Pydantic ussage on hyperparams
 
 v0.2.0
-[] 1. Dynamic Learnable Learning Rate Scheduler
-[] 3. Early stopping
-[] 5. Resume checkpoint
+[x] A function to determine the total number of parameters
+[x] Early stopping
+
+v0.2.1
+[] Resume checkpoint

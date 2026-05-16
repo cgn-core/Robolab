@@ -1,5 +1,5 @@
 """Data loading package."""
 
-from robolab.data.dataset import get_test_loader, get_train_loader
+from robolab.data.dataset import test_loader, train_loader, val_loader
 
-__all__ = ["get_train_loader", "get_test_loader"]
+__all__ = ["train_loader", "test_loader", "val_loader"]

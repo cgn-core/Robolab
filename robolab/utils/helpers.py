@@ -5,7 +5,6 @@ from pathlib import Path
 
 import torch
 from rich.logging import RichHandler
-from torchvision import transforms
 
 from robolab.configs import Hyperparameters
 
@@ -37,25 +36,25 @@ def get_device() -> torch.device:
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class AugmentedDataset(torch.utils.data.Dataset):
-    """A dataset wrapper that applies augmentations to the data."""
+def num_trainable_params(model: torch.nn.Module) -> int:
+    """Calculate the total number of trainable parameters in the model.
 
-    def __init__(
-        self, dataset: torch.utils.data.Dataset, augmentations: transforms.Compose
-    ):
-        """Initialize the augmented dataset.
+    Args:
+        model (torch.nn.Module): The PyTorch model to analyze.
 
-        Args:
-            dataset (torch.utils.data.Dataset): The original dataset to wrap.
-            augmentations (transforms.Compose): The augmentations to apply.
-        """
-        self.dataset = dataset
-        self.augmentations = augmentations
+    Returns:
+        int: Total number of trainable parameters.
+    """
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-    def __len__(self):
-        return len(self.dataset)
 
-    def __getitem__(self, idx: int):
-        image, label = self.dataset[idx]
-        image = self.augmentations(image)
-        return image, label
+def total_params(model: torch.nn.Module) -> int:
+    """Calculate the total number of parameters in the model.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model to analyze.
+
+    Returns:
+        int: Total number of parameters.
+    """
+    return sum(p.numel() for p in model.parameters())
