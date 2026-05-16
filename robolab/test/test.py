@@ -1,7 +1,7 @@
 """Test module for evaluating ConvNet on CIFAR-10 test set."""
 
-from robolab.eval.eval import evaluate
-from robolab.utils.helpers import logger
+from robolab.eval import evaluate
+from robolab.utils import logger
 
 
 def test(checkpoint_path: str = "checkpoints/model.ckpt") -> None:

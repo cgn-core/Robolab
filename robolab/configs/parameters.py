@@ -1,10 +1,11 @@
 """Hyperparameters configuration for model training."""
 
-from dataclasses import dataclass
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
-@dataclass
-class Hyperparameters:
+class Hyperparameters(BaseModel):
     """Base class for hyperparameters configuration.
 
     Attributes:
@@ -13,13 +14,13 @@ class Hyperparameters:
         random_seed: Random seed for reproducibility, or None to disable.
     """
 
-    logging_level: str = "INFO"
+    logging_level: Literal["INFO", "DEBUG", "WARNING", "ERROR"] = "INFO"
     checkpoint_dir: str = "checkpoints"
     random_seed: int | None = 42
+    num_classes: int = Field(ge=1, default=10)
 
 
-@dataclass
-class TrainingParams:
+class TrainingParams(BaseModel):
     """Hyperparameters configuration for model training.
 
     Attributes:
@@ -30,17 +31,16 @@ class TrainingParams:
     """
 
     batch_size: int = 100
-    learning_rate: float = 1e-3
-    num_epochs: int = 10
-    dtype: str = "float32"
+    learning_rate: float = Field(gt=0.0, default=1e-3)
+    num_epochs: int = Field(ge=1, default=10)
+    dtype: Literal["float32", "float16", "float64", "int32", "int64"] = "float32"
 
 
-@dataclass
-class TestingParams:
+class TestingParams(BaseModel):
     """Hyperparameters configuration for model testing/evaluation.
 
     Attributes:
         dtype: Data type for the model tensors during evaluation.
     """
 
-    dtype: str = "float16"
+    dtype: Literal["float32", "float16", "float64", "int32", "int64"] = "float32"

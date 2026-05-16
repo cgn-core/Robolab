@@ -2,12 +2,11 @@
 
 import torch
 
-from robolab.configs.parameters import TestingParams
+from robolab.configs import TestingParams
 from robolab.data import get_test_loader
 from robolab.models import ConvNet
-from robolab.utils.helpers import get_device, logger
+from robolab.utils import get_device, logger
 
-CIFAR10_CLASSES = 10
 CLASS_NAMES = [
     "airplane",
     "automobile",
@@ -36,28 +35,28 @@ def evaluate(
     """
 
     # Load hyperparameters and device
-    params = TestingParams()
+    cfg = TestingParams()
     device = get_device()
 
     # Load model checkpoint
-    model = ConvNet(num_classes=CIFAR10_CLASSES)
+    model = ConvNet(num_classes=cfg.num_classes)
     model.load_state_dict(
         torch.load(checkpoint_path, map_location=device, weights_only=True)
     )
-    model.to(device, dtype=getattr(torch, params.dtype))
+    model.to(device, dtype=getattr(torch, cfg.dtype))
     model.eval()
 
     test_loader = get_test_loader(data_root=data_root)
 
-    class_correct = [0] * CIFAR10_CLASSES
-    class_total = [0] * CIFAR10_CLASSES
+    class_correct = [0] * cfg.num_classes
+    class_total = [0] * cfg.num_classes
     correct = 0
     total = 0
 
     with torch.no_grad():
         for images, labels in test_loader:
             images = images.reshape(-1, 3, 32, 32).to(
-                device, dtype=getattr(torch, params.dtype)
+                device, dtype=getattr(torch, cfg.dtype)
             )
             labels = labels.to(device)
             outputs = model(images)
@@ -74,7 +73,7 @@ def evaluate(
 
     per_class_accuracy = [
         100.0 * class_correct[i] / class_total[i] if class_total[i] > 0 else 0.0
-        for i in range(CIFAR10_CLASSES)
+        for i in range(cfg.num_classes)
     ]
 
     return {

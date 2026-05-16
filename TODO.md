@@ -3,8 +3,8 @@ v0.1.2
 [x] Logging
 
 v0.1.3
-[] Data augmentation support
-[] Pydantic ussage on hyperparams
+[x] Data augmentation support
+[x] Pydantic ussage on hyperparams
 
 v0.2.0
 [] 1. Dynamic Learnable Learning Rate Scheduler
