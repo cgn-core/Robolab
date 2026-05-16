@@ -8,7 +8,8 @@ class ConvNet(nn.Module):
     """Lightweight convolutional neural network for image classification.
 
     Architecture:
-        - Two convolutional blocks (Conv → BatchNorm → Activation → Conv → Activation → MaxPool)
+        - Two convolutional blocks:
+          (Conv → BatchNorm → Activation → Conv → Activation → MaxPool)
         - Dropout regularization
         - Two fully connected layers
 

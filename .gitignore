@@ -5,7 +5,10 @@ build/
 dist/
 wheels/
 *.egg-info
-data/
 
 # Virtual environments
 .venv
+
+# CIFAR-10 dataset (large binary data)
+data/cifar-10-python.tar.gz
+data/cifar-10-batches-py/

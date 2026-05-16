@@ -7,6 +7,7 @@ from robolab.configs import Hyperparameters
 from robolab.data import get_train_loader
 from robolab.models import ConvNet
 from robolab.utils import get_device
+from robolab.utils.helpers import logger
 
 CIFAR10_CLASSES = 10
 
@@ -21,11 +22,19 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
     hp = Hyperparameters()
     device = get_device()
 
+    # Set random seed for reproducibility
+    if hp.random_seed is not None:
+        torch.manual_seed(hp.random_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(hp.random_seed)
+
     # Data
     train_loader = get_train_loader(data_root=data_root)
 
     # Model
-    model = ConvNet(num_classes=CIFAR10_CLASSES).to(device)
+    model = ConvNet(num_classes=CIFAR10_CLASSES).to(
+        device, dtype=getattr(torch, hp.dtype)
+    )
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -35,7 +44,9 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
     for epoch in range(hp.num_epochs):
         model.train()
         for i, (images, labels) in enumerate(train_loader):
-            images = images.reshape(-1, 3, 32, 32).to(device)
+            images = images.reshape(-1, 3, 32, 32).to(
+                device, dtype=getattr(torch, hp.dtype)
+            )
             labels = labels.to(device)
 
             # Forward
@@ -48,14 +59,14 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
             optimizer.step()
 
             if (i + 1) % 100 == 0:
-                print(
+                logger.info(
                     f"Epoch [{epoch + 1}/{hp.num_epochs}], "
                     f"Step [{i + 1}/{total_step}], Loss: {loss.item():.4f}"
                 )
 
     # Save checkpoint
     torch.save(model.state_dict(), f"{checkpoint_dir}/model.ckpt")
-    print(f"Checkpoint saved to {checkpoint_dir}/model.ckpt")
+    logger.info(f"Checkpoint saved to {checkpoint_dir}/model.ckpt")
 
 
 if __name__ == "__main__":

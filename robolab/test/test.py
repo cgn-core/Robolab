@@ -1,6 +1,7 @@
 """Test module for evaluating ConvNet on CIFAR-10 test set."""
 
 from robolab.eval.eval import evaluate
+from robolab.utils.helpers import logger
 
 
 def test(checkpoint_path: str = "checkpoints/model.ckpt") -> None:
@@ -10,7 +11,7 @@ def test(checkpoint_path: str = "checkpoints/model.ckpt") -> None:
         checkpoint_path: Path to the model checkpoint file.
     """
     metrics = evaluate(checkpoint_path=checkpoint_path)
-    print(
+    logger.info(
         f"Test Accuracy of the model on the {metrics['total_samples']} test images: "
         f"{metrics['overall_accuracy']:.2f} %"
     )
