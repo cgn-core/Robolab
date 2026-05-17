@@ -124,13 +124,13 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
 
         # Validation
         model.eval()
-        correct, total = evaluate(model, val_loader, dtype=TrainingParams().dtype)
+        metrics = evaluate(model, val_loader, dtype=TrainingParams().dtype)
 
-        val_accuracy = 100.0 * correct / total if total > 0 else 0.0
+        val_accuracy = metrics["accuracy"]
         writer.add_scalar("Validation Accuracy", val_accuracy, epoch)
         logger.info(
-            f"Validation Accuracy of the model on the {total} validation images: "
-            f"{val_accuracy:.2f} %"
+            f"Validation Accuracy of the model on the "
+            f"{len(val_loader.dataset)} validation images: {val_accuracy:.2f} %"
         )
 
         # Check for early stopping

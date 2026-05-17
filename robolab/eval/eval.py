@@ -1,4 +1,10 @@
 import torch
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+)
 from torch import nn
 
 from robolab.utils import get_device
@@ -22,17 +28,33 @@ def evaluate(
     model.eval()
     device = get_device()
 
+    # Initialize lists to store predictions and true labels
+    all_preds = []
+    all_labels = []
+
+    # Evaluate the model on the test set
     with torch.no_grad():
-        correct = 0
-        total = 0
         for images, labels in data_loader:
             images = images.reshape(-1, 3, 32, 32).to(
                 device, dtype=getattr(torch, dtype)
             )
             labels = labels.to(device)
+
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
 
-    return correct, total
+            all_preds.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+    # Calculate overall accuracy, F1 score, confusion matrix, and classification report
+    acc = accuracy_score(all_labels, all_preds)
+    f1 = f1_score(all_labels, all_preds, average="macro")
+    cm = confusion_matrix(all_labels, all_preds)
+    cr = classification_report(all_labels, all_preds)
+
+    return {
+        "accuracy": acc,
+        "f1_score": f1,
+        "confusion_matrix": cm,
+        "classification_report": cr,
+    }
