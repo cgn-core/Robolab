@@ -42,7 +42,7 @@ def test(
     class_total = [0] * Hyperparameters().num_classes
 
     # Evaluate the model on the test set
-    correct, total = evaluate(model, test_loader, dtype)
+    metrics = evaluate(model, test_loader, dtype)
 
     # Calculate per-class accuracy
     per_class_accuracy = [
@@ -52,17 +52,20 @@ def test(
 
     # Compile metrics into a dictionary
     metrics = {
-        "overall_accuracy": 100.0 * correct / total if total > 0 else 0.0,
-        "total_samples": total,
-        "correct_predictions": correct,
+        "overall_accuracy": metrics["accuracy"],
+        "total_samples": len(test_loader.dataset),
+        "correct_predictions": int(metrics["accuracy"] * len(test_loader.dataset)),
         "per_class_accuracy": per_class_accuracy,
+        "f1_score": metrics["f1_score"],
+        "confusion_matrix": metrics["confusion_matrix"],
+        "classification_report": metrics["classification_report"],
     }
 
-    # Log the overall accuracy
-    logger.info(
-        f"Test Accuracy of the model on the {metrics['total_samples']} test images: "
-        f"{metrics['overall_accuracy']:.2f} %"
-    )
+    # Log the results
+    logger.info(f"Total Test Samples: {metrics['total_samples']}")
+    logger.info(f"Correct Predictions: {metrics['correct_predictions']}")
+    logger.info(f"Overall Test Accuracy: {metrics['overall_accuracy'] * 100:.2f} %")
+    logger.info(f"F1 Score: {metrics['f1_score'] * 100:.4f} %")
 
     return metrics
 
