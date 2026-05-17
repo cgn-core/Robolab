@@ -75,3 +75,16 @@ def save_checkpoint(model: nn.Module, checkpoint_dir: str) -> str:
     torch.save(model.state_dict(), checkpoint_path)
     logger.info(f"Checkpoint saved to {checkpoint_path}")
     return checkpoint_path
+
+
+def load_checkpoint(model: nn.Module, checkpoint_path: str) -> None:
+    """Load the model checkpoint from the specified file.
+
+    Args:
+        model (nn.Module): The PyTorch model to load the checkpoint into.
+        checkpoint_path (str): The full path to the checkpoint file.
+    """
+    device = get_device()
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model.to(device)
+    logger.info(f"Checkpoint loaded from {checkpoint_path}")

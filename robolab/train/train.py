@@ -7,6 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from robolab.configs import Hyperparameters, TrainingParams
 from robolab.data import train_loader, val_loader
+from robolab.eval import evaluate
 from robolab.models import ConvNet
 from robolab.utils import get_device, logger, save_checkpoint, total_params
 
@@ -123,16 +124,7 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
 
         # Validation
         model.eval()
-        with torch.no_grad():
-            correct = 0
-            total = 0
-            for images, labels in val_loader:
-                images = images.reshape(-1, 3, 32, 32).to(device)
-                labels = labels.to(device)
-                outputs = model(images)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
+        correct, total = evaluate(model, val_loader, dtype=TrainingParams().dtype)
 
         val_accuracy = 100.0 * correct / total if total > 0 else 0.0
         writer.add_scalar("Validation Accuracy", val_accuracy, epoch)
