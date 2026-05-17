@@ -29,22 +29,22 @@ def evaluate(
     device = get_device()
 
     # Initialize lists to store predictions and true labels
-    all_preds = []
-    all_labels = []
+    all_preds, all_labels = [], []
 
     # Evaluate the model on the test set
     with torch.no_grad():
         for images, labels in data_loader:
-            images = images.reshape(-1, 3, 32, 32).to(
-                device, dtype=getattr(torch, dtype)
-            )
+            images = images.to(device, dtype=getattr(torch, dtype))
             labels = labels.to(device)
 
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
 
-            all_preds.extend(predicted.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
+            all_preds.extend(predicted.cpu())
+            all_labels.extend(labels.cpu())
+
+    all_preds = torch.cat(all_preds).numpy()
+    all_labels = torch.cat(all_labels).numpy()
 
     # Calculate overall accuracy, F1 score, confusion matrix, and classification report
     acc = accuracy_score(all_labels, all_preds)

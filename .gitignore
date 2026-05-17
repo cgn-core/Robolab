@@ -5,7 +5,10 @@ build/
 dist/
 wheels/
 *.egg-info
-logs/robolab.log
+
+
+logs/
+*.log
 
 # Virtual environments
 .venv

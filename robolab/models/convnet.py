@@ -29,44 +29,22 @@ class ConvNet(nn.Module):
         super().__init__()
 
         self._features = nn.Sequential(
-            # Block 1: 3x32x32 -> 32x32x32 -> 32x16x16
-            nn.Conv2d(3, 32, kernel_size=3, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 32, kernel_size=3, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(inplace=True),
+            nn.Conv2d(3, 32, kernel_size=5, padding=2),
+            nn.SiLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Dropout2d(0.1),
-
-            # Block 2: 32x16x16 -> 64x16x16 -> 64x8x8
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
+            nn.SiLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Dropout2d(0.2),
-
-            # Block 3: 64x8x8 -> 128x8x8 -> 128x4x4
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
+            nn.SiLU(inplace=True),
             nn.MaxPool2d(2),
-            nn.Dropout2d(0.3),
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.SiLU(inplace=True),
+            nn.MaxPool2d(2),
         )
-
-        self._classifier = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Linear(128 * 4 * 4, 512),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.3),
-            nn.Linear(512, num_classes),
-        )
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(256 * 2 * 2, 256)
+        self.fc2 = nn.Linear(256, 10)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass.
@@ -78,5 +56,7 @@ class ConvNet(nn.Module):
             Logits tensor of shape (N, num_classes).
         """
         x = self._features(x)
-        x = x.reshape(x.size(0), -1)
-        return self._classifier(x)
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        return x

@@ -44,7 +44,7 @@ class EarlyStopping:
             self.checkpoint_path = save_checkpoint(
                 model=model, checkpoint_dir=checkpoint_dir
             )
-            logger.info(f"New best validation accuracy: {score:.2f}%")
+            logger.info(f"New best validation accuracy: {score * 100:.2f}%")
 
         elif score > self.best_score + self.min_delta:
             self.best_score = score
@@ -52,7 +52,7 @@ class EarlyStopping:
                 model=model, checkpoint_dir=checkpoint_dir
             )
             self.counter = 0
-            logger.info(f"New best validation accuracy: {score:.2f}%")
+            logger.info(f"New best validation accuracy: {score * 100:.2f}%")
 
         else:
             self.counter += 1
@@ -102,7 +102,7 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
         # Training loop
         model.train()
         for i, (images, labels) in enumerate(train_loader):
-            images = images.reshape(-1, 3, 32, 32).to(device)
+            images = images.to(device)
             labels = labels.to(device)
 
             optimizer.zero_grad()
