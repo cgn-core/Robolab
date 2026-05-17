@@ -5,6 +5,7 @@ from pathlib import Path
 
 import torch
 from rich.logging import RichHandler
+from torch import nn
 
 from robolab.configs import Hyperparameters
 
@@ -58,3 +59,19 @@ def total_params(model: torch.nn.Module) -> int:
         int: Total number of parameters.
     """
     return sum(p.numel() for p in model.parameters())
+
+
+def save_checkpoint(model: nn.Module, checkpoint_dir: str) -> str:
+    """Save the model checkpoint to the specified directory.
+
+    Args:
+        model (nn.Module): The PyTorch model to save.
+        checkpoint_dir (str): Directory path where the checkpoint file will be saved.
+
+    Returns:
+        str: The full path to the saved checkpoint file.
+    """
+    checkpoint_path = f"{checkpoint_dir}/model.ckpt"
+    torch.save(model.state_dict(), checkpoint_path)
+    logger.info(f"Checkpoint saved to {checkpoint_path}")
+    return checkpoint_path

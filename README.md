@@ -28,6 +28,11 @@ uv run python -m robolab.test
 uv run python -m robolab.eval
 ```
 
+### TensorBoard
+```bash
+tensorboard --logdir=runs
+```
+
 ## Project Structure
 
 ```

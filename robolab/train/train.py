@@ -1,12 +1,14 @@
 """Training script for ConvNet on CIFAR-10."""
 
 import torch
+import torch.amp as amp
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 
 from robolab.configs import Hyperparameters, TrainingParams
 from robolab.data import train_loader, val_loader
 from robolab.models import ConvNet
-from robolab.utils import get_device, logger, total_params
+from robolab.utils import get_device, logger, save_checkpoint, total_params
 
 
 class EarlyStopping:
@@ -38,14 +40,14 @@ class EarlyStopping:
         """
         if self.best_score is None:
             self.best_score = score
-            self.checkpoint_path = self.save_checkpoint(
+            self.checkpoint_path = save_checkpoint(
                 model=model, checkpoint_dir=checkpoint_dir
             )
             logger.info(f"New best validation accuracy: {score:.2f}%")
 
         elif score > self.best_score + self.min_delta:
             self.best_score = score
-            self.checkpoint_path = self.save_checkpoint(
+            self.checkpoint_path = save_checkpoint(
                 model=model, checkpoint_dir=checkpoint_dir
             )
             self.counter = 0
@@ -58,13 +60,6 @@ class EarlyStopping:
                 self.early_stop = True
                 logger.info("Early stopping triggered.")
 
-    def save_checkpoint(self, model: nn.Module, checkpoint_dir: str) -> str:
-        """Save the model checkpoint and return the checkpoint path."""
-        checkpoint_path = f"{checkpoint_dir}/model.ckpt"
-        torch.save(model.state_dict(), checkpoint_path)
-        logger.info(f"Checkpoint saved to {checkpoint_path}")
-        return checkpoint_path
-
 
 def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> None:
     """Train the ConvNet model on CIFAR-10.
@@ -73,6 +68,7 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
         checkpoint_dir: Directory to save model checkpoints.
         data_root: Root directory for dataset storage.
     """
+
     # Create fresh early stopping instance for each training run
     early_stopping = EarlyStopping(patience=Hyperparameters().early_stopping_patience)
     device = get_device()
@@ -84,35 +80,42 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
             torch.cuda.manual_seed_all(Hyperparameters().random_seed)
 
     # Model
-    model = ConvNet(num_classes=Hyperparameters().num_classes).to(
-        device, dtype=getattr(torch, TrainingParams().dtype)
-    )
+    model = ConvNet(num_classes=Hyperparameters().num_classes).to(device)
     logger.info(f"total_params: {total_params(model):,}")
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=TrainingParams().learning_rate)
 
+    # Mixed precision training setup
+    if device.type == "cuda":
+        scaler = amp.GradScaler(device)
+    else:
+        scaler = None  # No need for scaler on CPU
+
+    # TensorBoard writer
+    writer = SummaryWriter(log_dir="runs/convnet_cifar10")
+
     total_step = len(train_loader)
     for epoch in range(TrainingParams().num_epochs):
         # Training loop
         model.train()
         for i, (images, labels) in enumerate(train_loader):
-            images = images.reshape(-1, 3, 32, 32).to(
-                device, dtype=getattr(torch, TrainingParams().dtype)
-            )
+            images = images.reshape(-1, 3, 32, 32).to(device)
             labels = labels.to(device)
 
-            # Forward
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-
-            # Backward
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+
+            with amp.autocast(device.type, dtype=torch.float16):
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             if (i + 1) % 100 == 0:
+                writer.add_scalar("Training Loss", loss.item(), epoch * total_step + i)
                 logger.info(
                     f"Epoch [{epoch + 1}/{TrainingParams().num_epochs}], "
                     f"Step [{i + 1}/{total_step}], Loss: {loss.item():.4f}"
@@ -124,9 +127,7 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
             correct = 0
             total = 0
             for images, labels in val_loader:
-                images = images.reshape(-1, 3, 32, 32).to(
-                    device, dtype=getattr(torch, TrainingParams().dtype)
-                )
+                images = images.reshape(-1, 3, 32, 32).to(device)
                 labels = labels.to(device)
                 outputs = model(images)
                 _, predicted = torch.max(outputs.data, 1)
@@ -134,10 +135,13 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
                 correct += (predicted == labels).sum().item()
 
         val_accuracy = 100.0 * correct / total if total > 0 else 0.0
+        writer.add_scalar("Validation Accuracy", val_accuracy, epoch)
         logger.info(
             f"Validation Accuracy of the model on the {total} validation images: "
             f"{val_accuracy:.2f} %"
         )
+
+        # Check for early stopping
         early_stopping(model, val_accuracy, checkpoint_dir)
         if early_stopping.early_stop:
             break
