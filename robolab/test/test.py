@@ -1,6 +1,6 @@
 """Test module for evaluating ConvNet on CIFAR-10 test set."""
 
-from robolab.configs import Hyperparameters
+from robolab.configs import cfg
 from robolab.data import test_loader
 from robolab.eval import evaluate
 from robolab.models import ConvNet
@@ -31,15 +31,15 @@ def test(
     device = get_device()
 
     # Load model checkpoint
-    model = ConvNet(num_classes=Hyperparameters().num_classes).to(device)
+    model = ConvNet(num_classes=cfg.hyperparams.num_classes).to(device)
     load_checkpoint(
         model=model,
         checkpoint_path=checkpoint_path,
     )
 
     # Initialize the model and move it to the appropriate device
-    class_correct = [0] * Hyperparameters().num_classes
-    class_total = [0] * Hyperparameters().num_classes
+    class_correct = [0] * cfg.hyperparams.num_classes
+    class_total = [0] * cfg.hyperparams.num_classes
 
     # Evaluate the model on the test set
     metrics = evaluate(model, test_loader, dtype)
@@ -47,7 +47,7 @@ def test(
     # Calculate per-class accuracy
     per_class_accuracy = [
         100.0 * class_correct[i] / class_total[i] if class_total[i] > 0 else 0.0
-        for i in range(Hyperparameters().num_classes)
+        for i in range(cfg.hyperparams.num_classes)
     ]
 
     # Compile metrics into a dictionary

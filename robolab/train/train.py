@@ -5,7 +5,7 @@ import torch.amp as amp
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 
-from robolab.configs import Hyperparameters, TrainingParams
+from robolab.configs import cfg
 from robolab.data import train_loader, val_loader
 from robolab.eval import evaluate
 from robolab.models import ConvNet
@@ -71,22 +71,22 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
     """
 
     # Create fresh early stopping instance for each training run
-    early_stopping = EarlyStopping(patience=Hyperparameters().early_stopping_patience)
+    early_stopping = EarlyStopping(patience=cfg.hyperparams.early_stopping_patience)
     device = get_device()
 
     # Set random seed for reproducibility
-    if Hyperparameters().random_seed is not None:
-        torch.manual_seed(Hyperparameters().random_seed)
+    if cfg.hyperparams.random_seed is not None:
+        torch.manual_seed(cfg.hyperparams.random_seed)
         if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(Hyperparameters().random_seed)
+            torch.cuda.manual_seed_all(cfg.hyperparams.random_seed)
 
     # Model
-    model = ConvNet(num_classes=Hyperparameters().num_classes).to(device)
+    model = ConvNet(num_classes=cfg.hyperparams.num_classes).to(device)
     logger.info(f"total_params: {total_params(model):,}")
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=TrainingParams().learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.trainparams.learning_rate)
 
     # Mixed precision training setup
     if device.type == "cuda":
@@ -98,7 +98,7 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
     writer = SummaryWriter(log_dir="runs/convnet_cifar10")
 
     total_step = len(train_loader)
-    for epoch in range(TrainingParams().num_epochs):
+    for epoch in range(cfg.trainparams.num_epochs):
         # Training loop
         model.train()
         for i, (images, labels) in enumerate(train_loader):
@@ -118,13 +118,13 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
             if (i + 1) % 100 == 0:
                 writer.add_scalar("Training Loss", loss.item(), epoch * total_step + i)
                 logger.info(
-                    f"Epoch [{epoch + 1}/{TrainingParams().num_epochs}], "
+                    f"Epoch [{epoch + 1}/{cfg.trainparams.num_epochs}], "
                     f"Step [{i + 1}/{total_step}], Loss: {loss.item():.4f}"
                 )
 
         # Validation
         model.eval()
-        metrics = evaluate(model, val_loader, dtype=TrainingParams().dtype)
+        metrics = evaluate(model, val_loader, dtype=cfg.trainparams.dtype)
 
         val_accuracy = metrics["accuracy"]
         writer.add_scalar("Validation Accuracy", val_accuracy, epoch)

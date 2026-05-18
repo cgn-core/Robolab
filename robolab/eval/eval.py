@@ -43,8 +43,8 @@ def evaluate(
             all_preds.extend(predicted.cpu())
             all_labels.extend(labels.cpu())
 
-    all_preds = torch.cat(all_preds).numpy()
-    all_labels = torch.cat(all_labels).numpy()
+    all_preds = torch.stack(all_preds).numpy()
+    all_labels = torch.stack(all_labels).numpy()
 
     # Calculate overall accuracy, F1 score, confusion matrix, and classification report
     acc = accuracy_score(all_labels, all_preds)

@@ -1,31 +1,9 @@
 """Common helper functions."""
 
-import logging
-from pathlib import Path
-
 import torch
-from rich.logging import RichHandler
 from torch import nn
 
-from robolab.configs import Hyperparameters
-
-cfg = Hyperparameters()
-
-current_dir = Path(__file__).resolve().parent
-log_dir = current_dir.parent.parent / "logs"
-log_file = log_dir / "robolab.log"
-log_dir.mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(
-    level=cfg.logging_level,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[
-        RichHandler(rich_tracebacks=True),
-        logging.FileHandler(log_file, encoding="utf-8"),
-    ],
-)
-logger = logging.getLogger("robolab")
+from robolab.utils.logger import logger
 
 
 def get_device() -> torch.device:

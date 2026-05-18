@@ -1,5 +1,5 @@
 """Configuration package for hyperparameters and settings."""
 
-from robolab.configs.config import Hyperparameters, TestingParams, TrainingParams
+from robolab.configs.config import cfg
 
-__all__ = ["Hyperparameters", "TrainingParams", "TestingParams"]
+__all__ = ["cfg"]

@@ -1,8 +1,10 @@
 """Hyperparameters configuration for model training."""
 
+from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+import yaml
+from pydantic import BaseModel, Field, ValidationError
 
 
 class Hyperparameters(BaseModel):
@@ -45,3 +47,36 @@ class TestingParams(BaseModel):
     """
 
     dtype: Literal["float32", "float16", "float64", "int32", "int64"] = "float32"
+
+
+class Config(BaseModel):
+    """_summary_
+
+    Args:
+        BaseModel (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    hyperparams: Hyperparameters = Field(alias="hyperparams")
+    trainparams: TrainingParams = Field(alias="trainparams")
+    testparams: TestingParams = Field(alias="testparams")
+
+    @classmethod
+    def load_from_yaml(cls):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+        try:
+            with open(Path(__file__).parent / "config.yaml", encoding="utf-8") as f:
+                config_data = yaml.safe_load(f)
+                return cls(**config_data)
+        except (yaml.YAMLError, ValidationError) as e:
+            # logger.error("Configuration error: %s", e)
+            raise
+
+
+cfg = Config.load_from_yaml()
