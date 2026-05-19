@@ -1,4 +1,8 @@
-"""Test module for evaluating ConvNet on CIFAR-10 test set."""
+"""Test module for evaluating ConvNet on CIFAR-10 test set.
+
+This module loads a trained model checkpoint and evaluates it on the
+full CIFAR-10 test set, logging overall and per-class metrics.
+"""
 
 from robolab.configs import cfg
 from robolab.data import test_loader
@@ -15,53 +19,46 @@ def test(
     checkpoint_path: str = "checkpoints/model.ckpt",
     dtype: str = "float32",
 ) -> dict:
-    """Evaluate the trained model and return detailed metrics.
+    """Evaluate the trained model on the full CIFAR-10 test set.
+
+    Loads a model checkpoint from disk, runs inference over the test
+    loader, and returns a dictionary of aggregated metrics.
 
     Args:
-        checkpoint_path: Path to the model checkpoint file.
-        data_root: Root directory for dataset storage.
-        dtype: Data type for tensor operations.
-    Returns:
-        dict: Evaluation metrics including overall and per-class accuracy.
-    """
+        checkpoint_path: File path to the saved model checkpoint.
+        dtype: Data type string for tensor operations
+            (e.g., ``"float32"``, ``"float16"``).
 
+    Returns:
+        dict: Evaluation metrics including overall accuracy, F1 score,
+            confusion matrix, and classification report.
+    """
     logger.info("Starting evaluation on the test set...")
 
-    # Load hyperparameters and device
+    # Determine compute device (CUDA if available, otherwise CPU)
     device = get_device()
 
-    # Load model checkpoint
+    # Instantiate model architecture and restore weights from checkpoint
     model = ConvNet(num_classes=cfg.hyperparams.num_classes).to(device)
     load_checkpoint(
         model=model,
         checkpoint_path=checkpoint_path,
     )
 
-    # Initialize the model and move it to the appropriate device
-    class_correct = [0] * cfg.hyperparams.num_classes
-    class_total = [0] * cfg.hyperparams.num_classes
-
-    # Evaluate the model on the test set
+    # Run comprehensive evaluation via the eval module
     metrics = evaluate(model, test_loader, dtype)
 
-    # Calculate per-class accuracy
-    per_class_accuracy = [
-        100.0 * class_correct[i] / class_total[i] if class_total[i] > 0 else 0.0
-        for i in range(cfg.hyperparams.num_classes)
-    ]
-
-    # Compile metrics into a dictionary
+    # Aggregate evaluation results into a single metrics dictionary
     metrics = {
         "overall_accuracy": metrics["accuracy"],
         "total_samples": len(test_loader.dataset),
         "correct_predictions": int(metrics["accuracy"] * len(test_loader.dataset)),
-        "per_class_accuracy": per_class_accuracy,
         "f1_score": metrics["f1_score"],
         "confusion_matrix": metrics["confusion_matrix"],
         "classification_report": metrics["classification_report"],
     }
 
-    # Log the results
+    # Log key evaluation results to console and file
     logger.info(f"Total Test Samples: {metrics['total_samples']}")
     logger.info(f"Correct Predictions: {metrics['correct_predictions']}")
     logger.info(f"Overall Test Accuracy: {metrics['overall_accuracy'] * 100:.2f} %")

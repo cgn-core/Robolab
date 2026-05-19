@@ -3,8 +3,6 @@
 import torch
 import torch.nn as nn
 
-from robolab.configs import cfg
-
 
 class ConvNet(nn.Module):
     """Improved convolutional neural network for CIFAR-10 classification.
@@ -30,18 +28,16 @@ class ConvNet(nn.Module):
         """
         super().__init__()
 
+        # Feature extractor: three convolutional blocks with BatchNorm and pooling
         self._features = nn.Sequential(
-            # Conv1
             nn.Conv2d(3, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
-            # Conv2
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
-            # Conv3
             nn.Conv2d(128, 256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
@@ -66,4 +62,3 @@ class ConvNet(nn.Module):
         x = self.fc1(x)
         x = self.fc2(x)
         return x
-

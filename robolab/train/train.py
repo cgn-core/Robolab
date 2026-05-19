@@ -1,4 +1,22 @@
-"""Training script for ConvNet on CIFAR-10."""
+"""Training script for ConvNet on CIFAR-10.
+
+This module provides a complete training pipeline for training a ConvNet
+classification model on the CIFAR-10 dataset. It includes:
+    - Early stopping mechanism to prevent overfitting
+    - Mixed precision (AMP) training for faster GPU training
+    - Cosine annealing with warm restarts learning rate scheduling
+    - Gradient clipping for training stability
+    - TensorBoard logging for training metrics
+    - Checkpoint saving and best model tracking
+
+Usage:
+    python -m robolab.train          # Run training with default config
+    python -c "from robolab.train import train; train()"
+
+Configuration:
+    Training hyperparameters are loaded from robolab/configs/config.yaml
+    via the centralized cfg object (cfg.trainparams, cfg.hyperparams).
+"""
 
 import torch
 import torch.amp as amp
@@ -14,17 +32,39 @@ from robolab.utils import get_device, logger, save_checkpoint, total_params
 
 
 class EarlyStopping:
-    """Early stopping utility to prevent overfitting.
+    """Early stopping utility to prevent overfitting during training.
 
-    Saves the best model checkpoint based on validation accuracy.
-    Stops training when accuracy hasn't improved for 'patience' epochs.
+    Monitors validation accuracy and saves a checkpoint whenever the model
+    achieves a new best score. Training is halted if no improvement is
+    observed for a configurable number of epochs (patience).
+
+    Attributes:
+        patience: Number of epochs with no improvement before triggering stop.
+        min_delta: Minimum absolute change in validation accuracy to qualify
+            as a meaningful improvement (prevents stopping on negligible gains).
+        counter: Internal counter tracking consecutive non-improving epochs.
+        best_score: The highest validation accuracy seen so far.
+        early_stop: Flag indicating whether early stopping has been triggered.
+        checkpoint_path: Path to the last saved best-model checkpoint.
+
+    Example:
+        >>> early_stop = EarlyStopping(patience=10, min_delta=0.001)
+        >>> for epoch in range(num_epochs):
+        ...     val_acc = evaluate(model, val_loader)
+        ...     early_stop(model, val_acc, "checkpoints")
+        ...     if early_stop.early_stop:
+        ...         break
     """
 
     def __init__(self, patience: int = 5, min_delta: float = 0.0):
-        """
+        """Initialize the EarlyStopping utility.
+
         Args:
-            patience: Number of epochs to wait for improvement before stopping.
-            min_delta: Minimum change in the monitored metric to qualify as an improvement.
+            patience: Number of epochs to wait for validation accuracy
+                improvement before triggering early stopping. Default is 5.
+            min_delta: Minimum change in validation accuracy to qualify as
+                an improvement. Metrics changes smaller than this value are
+                ignored. Default is 0.0 (any improvement counts).
         """
         self.patience = patience
         self.min_delta = min_delta
@@ -34,11 +74,26 @@ class EarlyStopping:
         self.checkpoint_path = None
 
     def __call__(self, model: nn.Module, score: float, checkpoint_dir: str) -> None:
-        """
+        """Evaluate the current validation score and manage checkpoint saving.
+
+        Compares the provided validation score against the best seen so far.
+        If the score represents a meaningful improvement (exceeding best_score
+        by at least min_delta), the model checkpoint is saved and the
+        non-improvement counter is reset. Otherwise, the counter is incremented.
+
         Args:
-            model: The model to save checkpoints for.
-            score: The validation accuracy score.
-            checkpoint_dir: Directory to save checkpoints.
+            model: The PyTorch model instance to save. A checkpoint will be
+                saved only if the current score represents an improvement.
+            score: The current epoch's validation accuracy (float between 0.0
+                and 1.0). This is the metric used to determine improvement.
+            checkpoint_dir: Directory path where model checkpoint files (.ckpt)
+                will be saved. Created if it does not exist.
+
+        Side Effects:
+            - Saves model checkpoint to disk when improvement is detected.
+            - Logs progress messages via the logger.
+            - Updates internal state (best_score, counter, early_stop flags).
+            - Sets self.early_stop = True when patience is exhausted.
         """
         if self.best_score is None:
             self.best_score = score
@@ -64,11 +119,41 @@ class EarlyStopping:
 
 
 def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> None:
-    """Train the ConvNet model on CIFAR-10.
+    """Train ConvNet on CIFAR-10 with the configured hyperparameters.
+
+    This function orchestrates the full training lifecycle including:
+        1. Setting random seeds for reproducibility
+        2. Initializing the ConvNet model and computing parameter count
+        3. Configuring AdamW optimizer with weight decay
+        4. Setting up CosineAnnealingWarmRestarts learning rate scheduler
+        5. Training with mixed precision (AMP) on CUDA, standard precision on CPU
+        6. Performing periodic validation and logging to TensorBoard
+        7. Saving checkpoints and triggering early stopping if validation
+           accuracy plateaus
 
     Args:
-        checkpoint_dir: Directory to save model checkpoints.
-        data_root: Root directory for dataset storage.
+        checkpoint_dir: Directory path where model checkpoints (.ckpt files)
+            will be saved. Best checkpoints are overwritten as validation
+            accuracy improves. Default is "checkpoints".
+        data_root: Root directory path where the CIFAR-10 dataset will be
+            downloaded to or loaded from. Default is "./data".
+
+    Note:
+        - Mixed precision (float16) is automatically enabled when a CUDA GPU
+          is available, providing faster training with minimal accuracy impact.
+        - The learning rate follows a cosine annealing schedule with warm
+          restarts (T_0=10, T_mult=2), restarting every 10, 20, 40... epochs.
+        - Gradient clipping is applied at max_grad_norm=1.0 for stability.
+        - TensorBoard logs are written to "runs/convnet_cifar10/".
+        - Training stops early if validation accuracy does not improve for
+          cfg.hyperparams.early_stopping_patience consecutive epochs.
+
+    Example:
+        # Run training with default settings
+        >>> train()
+
+        # Custom checkpoint directory and data path
+        >>> train(checkpoint_dir="/tmp/my_checkpoints", data_root="/tmp/cifar10_data")
     """
 
     # Create fresh early stopping instance for each training run

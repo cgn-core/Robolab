@@ -1,3 +1,10 @@
+"""Model evaluation module with comprehensive metric computation.
+
+This module provides functions to evaluate trained PyTorch models
+on CIFAR-10 datasets, computing accuracy, F1 score, confusion
+matrix, and classification reports using scikit-learn.
+"""
+
 import torch
 from sklearn.metrics import (
     accuracy_score,
@@ -15,23 +22,31 @@ def evaluate(
 ) -> dict:
     """Evaluate the trained model and return detailed metrics.
 
+    Runs the model in inference mode over the provided data loader,
+    collects predictions, and computes evaluation metrics.
+
     Args:
-        model (nn.Module): The trained PyTorch model to evaluate.
-        data_loader (torch.utils.data.DataLoader): The data loader for the test set.
-        dtype (str): Data type for tensor operations.
+        model: The trained PyTorch model to evaluate.
+        data_loader: The data loader for the test or validation set.
+        dtype: Data type string for tensor operations
+            (e.g., ``"float32"``, ``"float16"``).
 
     Returns:
-        dict: Evaluation metrics including overall and per-class accuracy.
-    """
+        Dictionary containing the following keys:
 
-    # Initialize the model and move it to the appropriate device
+        - ``"accuracy"``: Overall classification accuracy.
+        - ``"f1_score"``: Macro-averaged F1 score.
+        - ``"confusion_matrix"``: Confusion matrix as a NumPy array.
+        - ``"classification_report"``: Per-class precision/recall/F1 report.
+    """
+    # Disable gradient computation and set model to inference mode
     model.eval()
     device = get_device()
 
-    # Initialize lists to store predictions and true labels
-    all_preds, all_labels = [], []
+    # Accumulators for batched predictions and ground-truth labels
+    all_preds: list[int] = []
+    all_labels: list[int] = []
 
-    # Evaluate the model on the test set
     with torch.no_grad():
         for images, labels in data_loader:
             images = images.to(device, dtype=getattr(torch, dtype))
@@ -46,7 +61,8 @@ def evaluate(
     all_preds = torch.stack(all_preds).numpy()
     all_labels = torch.stack(all_labels).numpy()
 
-    # Calculate overall accuracy, F1 score, confusion matrix, and classification report
+    # Compute overall accuracy, macro F1 score, confusion matrix,
+    # and classification report
     acc = accuracy_score(all_labels, all_preds)
     f1 = f1_score(all_labels, all_preds, average="macro")
     cm = confusion_matrix(all_labels, all_preds)
