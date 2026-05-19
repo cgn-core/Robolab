@@ -3,6 +3,7 @@
 import torch
 import torch.amp as amp
 import torch.nn as nn
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, OneCycleLR
 from torch.utils.tensorboard import SummaryWriter
 
 from robolab.configs import cfg
@@ -86,7 +87,18 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.trainparams.learning_rate)
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=cfg.trainparams.learning_rate,
+        weight_decay=cfg.trainparams.weight_decay,
+    )
+
+    # Cosine annealing scheduler
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2)
+
+    # Gradient clipping
+    max_grad_norm = 1.0
+    nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
 
     # Mixed precision training setup
     if device.type == "cuda":
@@ -132,6 +144,9 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
             f"Validation Accuracy of the model on the "
             f"{len(val_loader.dataset)} validation images: {val_accuracy:.2f} %"
         )
+
+        # Step scheduler after each epoch (CosineAnnealingWarmRestarts is epoch-based)
+        scheduler.step()
 
         # Check for early stopping
         early_stopping(model, val_accuracy, checkpoint_dir)

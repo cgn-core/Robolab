@@ -3,6 +3,8 @@
 import torch
 import torch.nn as nn
 
+from robolab.configs import cfg
+
 
 class ConvNet(nn.Module):
     """Improved convolutional neural network for CIFAR-10 classification.
@@ -64,3 +66,4 @@ class ConvNet(nn.Module):
         x = self.fc1(x)
         x = self.fc2(x)
         return x
+

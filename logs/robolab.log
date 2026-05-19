@@ -1647,3 +1647,150 @@ Total Test Samples: 10000
 Correct Predictions: 7950
 Overall Test Accuracy: 79.50 %
 F1 Score: 79.2462 %
+total_params: 440,074
+total_params: 440,074
+Epoch [1/50], Step [100/500], Loss: 1.6675
+Epoch [1/50], Step [200/500], Loss: 1.4343
+total_params: 440,074
+Epoch [1/50], Step [100/500], Loss: 1.5876
+Epoch [1/50], Step [200/500], Loss: 1.3494
+Epoch [1/50], Step [300/500], Loss: 1.1666
+Epoch [1/50], Step [400/500], Loss: 1.1970
+Epoch [1/50], Step [500/500], Loss: 1.1572
+Validation Accuracy of the model on the 5000 validation images: 0.54 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 53.50%
+Epoch [2/50], Step [100/500], Loss: 1.2190
+Epoch [2/50], Step [200/500], Loss: 0.9797
+Epoch [2/50], Step [300/500], Loss: 1.0553
+Epoch [2/50], Step [400/500], Loss: 1.0143
+Epoch [2/50], Step [500/500], Loss: 1.0239
+Validation Accuracy of the model on the 5000 validation images: 0.54 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 53.60%
+Epoch [3/50], Step [100/500], Loss: 0.8321
+Epoch [3/50], Step [200/500], Loss: 0.8654
+Epoch [3/50], Step [300/500], Loss: 1.0288
+total_params: 440,074
+total_params: 440,074
+Epoch [1/50], Step [100/500], Loss: 1.5876
+Epoch [1/50], Step [200/500], Loss: 1.3494
+Epoch [1/50], Step [300/500], Loss: 1.1666
+Epoch [1/50], Step [400/500], Loss: 1.1970
+Epoch [1/50], Step [500/500], Loss: 1.1572
+Validation Accuracy of the model on the 5000 validation images: 0.54 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 53.50%
+Epoch [2/50], Step [100/500], Loss: 1.2190
+Epoch [2/50], Step [200/500], Loss: 0.9797
+Epoch [2/50], Step [300/500], Loss: 1.0553
+Epoch [2/50], Step [400/500], Loss: 1.0143
+Epoch [2/50], Step [500/500], Loss: 1.0239
+Validation Accuracy of the model on the 5000 validation images: 0.54 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 53.60%
+Epoch [3/50], Step [100/500], Loss: 0.8321
+Epoch [3/50], Step [200/500], Loss: 0.8654
+Epoch [3/50], Step [300/500], Loss: 1.0288
+Epoch [3/50], Step [400/500], Loss: 0.8465
+Epoch [3/50], Step [500/500], Loss: 0.7280
+Validation Accuracy of the model on the 5000 validation images: 0.65 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 64.78%
+Epoch [4/50], Step [100/500], Loss: 0.7504
+Epoch [4/50], Step [200/500], Loss: 0.8734
+Epoch [4/50], Step [300/500], Loss: 0.7745
+Epoch [4/50], Step [400/500], Loss: 0.9411
+Epoch [4/50], Step [500/500], Loss: 0.7892
+Validation Accuracy of the model on the 5000 validation images: 0.73 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 72.96%
+Epoch [5/50], Step [100/500], Loss: 0.6508
+Epoch [5/50], Step [200/500], Loss: 0.7032
+Epoch [5/50], Step [300/500], Loss: 0.6802
+Epoch [5/50], Step [400/500], Loss: 0.6945
+Epoch [5/50], Step [500/500], Loss: 0.6259
+Validation Accuracy of the model on the 5000 validation images: 0.71 %
+EarlyStopping counter: 1 out of 5
+Epoch [6/50], Step [100/500], Loss: 0.5423
+Epoch [6/50], Step [200/500], Loss: 0.5611
+Epoch [6/50], Step [300/500], Loss: 0.6958
+Epoch [6/50], Step [400/500], Loss: 0.5490
+Epoch [6/50], Step [500/500], Loss: 0.7761
+Validation Accuracy of the model on the 5000 validation images: 0.77 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 76.68%
+Epoch [7/50], Step [100/500], Loss: 0.7617
+Epoch [7/50], Step [200/500], Loss: 0.4387
+Epoch [7/50], Step [300/500], Loss: 0.5541
+Epoch [7/50], Step [400/500], Loss: 0.6557
+Epoch [7/50], Step [500/500], Loss: 0.4008
+Validation Accuracy of the model on the 5000 validation images: 0.80 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 80.44%
+Epoch [8/50], Step [100/500], Loss: 0.4449
+Epoch [8/50], Step [200/500], Loss: 0.4620
+Epoch [8/50], Step [300/500], Loss: 0.4612
+Epoch [8/50], Step [400/500], Loss: 0.4923
+Epoch [8/50], Step [500/500], Loss: 0.5163
+Validation Accuracy of the model on the 5000 validation images: 0.81 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 81.04%
+Epoch [9/50], Step [100/500], Loss: 0.4269
+Epoch [9/50], Step [200/500], Loss: 0.5071
+Epoch [9/50], Step [300/500], Loss: 0.4198
+Epoch [9/50], Step [400/500], Loss: 0.3716
+Epoch [9/50], Step [500/500], Loss: 0.5547
+Validation Accuracy of the model on the 5000 validation images: 0.86 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 86.38%
+Epoch [10/50], Step [100/500], Loss: 0.3309
+Epoch [10/50], Step [200/500], Loss: 0.3840
+Epoch [10/50], Step [300/500], Loss: 0.4350
+Epoch [10/50], Step [400/500], Loss: 0.3532
+Epoch [10/50], Step [500/500], Loss: 0.3812
+Validation Accuracy of the model on the 5000 validation images: 0.87 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 87.06%
+Epoch [11/50], Step [100/500], Loss: 0.6808
+Epoch [11/50], Step [200/500], Loss: 0.7722
+Epoch [11/50], Step [300/500], Loss: 0.5701
+Epoch [11/50], Step [400/500], Loss: 0.6239
+Epoch [11/50], Step [500/500], Loss: 0.6100
+Validation Accuracy of the model on the 5000 validation images: 0.72 %
+EarlyStopping counter: 1 out of 5
+Epoch [12/50], Step [100/500], Loss: 0.5520
+Epoch [12/50], Step [200/500], Loss: 0.5933
+Epoch [12/50], Step [300/500], Loss: 0.6639
+Epoch [12/50], Step [400/500], Loss: 0.6030
+Epoch [12/50], Step [500/500], Loss: 0.5732
+Validation Accuracy of the model on the 5000 validation images: 0.70 %
+EarlyStopping counter: 2 out of 5
+Epoch [13/50], Step [100/500], Loss: 0.4910
+Epoch [13/50], Step [200/500], Loss: 0.5968
+Epoch [13/50], Step [300/500], Loss: 0.4953
+Epoch [13/50], Step [400/500], Loss: 0.6261
+Epoch [13/50], Step [500/500], Loss: 0.3941
+Validation Accuracy of the model on the 5000 validation images: 0.78 %
+EarlyStopping counter: 3 out of 5
+Epoch [14/50], Step [100/500], Loss: 0.3983
+Epoch [14/50], Step [200/500], Loss: 0.5687
+Epoch [14/50], Step [300/500], Loss: 0.4463
+Epoch [14/50], Step [400/500], Loss: 0.5255
+Epoch [14/50], Step [500/500], Loss: 0.5643
+Validation Accuracy of the model on the 5000 validation images: 0.74 %
+EarlyStopping counter: 4 out of 5
+Epoch [15/50], Step [100/500], Loss: 0.5696
+Epoch [15/50], Step [200/500], Loss: 0.3054
+Epoch [15/50], Step [300/500], Loss: 0.3611
+Epoch [15/50], Step [400/500], Loss: 0.4029
+Epoch [15/50], Step [500/500], Loss: 0.4641
+Validation Accuracy of the model on the 5000 validation images: 0.85 %
+EarlyStopping counter: 5 out of 5
+Early stopping triggered.
+Starting evaluation on the test set...
+Checkpoint loaded from checkpoints/model.ckpt
+Total Test Samples: 10000
+Correct Predictions: 8021
+Overall Test Accuracy: 80.21 %
+F1 Score: 80.0940 %

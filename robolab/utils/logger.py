@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from rich.logging import RichHandler
@@ -16,7 +17,9 @@ logging.basicConfig(
     datefmt="[%X]",
     handlers=[
         RichHandler(rich_tracebacks=True),
-        logging.FileHandler(log_file, encoding="utf-8"),
+        RotatingFileHandler(
+            log_file, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
+        ),
     ],
 )
 logger = logging.getLogger("robolab")
