@@ -9,6 +9,7 @@ wheels/
 
 logs/
 *.log
+runs/
 
 # Virtual environments
 .venv

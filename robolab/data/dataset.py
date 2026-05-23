@@ -16,12 +16,11 @@ from robolab.configs import cfg
 _CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
 _CIFAR10_STD = (0.2470, 0.2435, 0.2616)
 
-# Training transforms: applies normalization with optional augmentation hooks
-# (RandomCrop and RandomHorizontalFlip are commented out for ablation)
+# Training transforms: CIFAR-10 standard data augmentation pipeline
 train_transforms = transforms.Compose(
     [
-        # transforms.RandomCrop(32, padding=4),
-        # transforms.RandomHorizontalFlip(),
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(_CIFAR10_MEAN, _CIFAR10_STD),
     ]

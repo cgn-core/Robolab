@@ -1,6 +1,5 @@
 """Model definitions package."""
 
-from robolab.models.model import ConvNet
+from robolab.models.model import ResNet18, resnet18
 
-__all__ = ["ConvNet"]
-
+__all__ = ["ResNet18", "resnet18"]

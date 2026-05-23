@@ -27,7 +27,7 @@ from torch.utils.tensorboard import SummaryWriter
 from robolab.configs import cfg
 from robolab.data import train_loader, val_loader
 from robolab.eval import evaluate
-from robolab.models import ConvNet
+from robolab.models import ResNet18
 from robolab.utils import get_device, logger, save_checkpoint, total_params
 
 
@@ -167,7 +167,7 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
             torch.cuda.manual_seed_all(cfg.hyperparams.random_seed)
 
     # Model
-    model = ConvNet(num_classes=cfg.hyperparams.num_classes).to(device)
+    model = ResNet18(num_classes=cfg.hyperparams.num_classes).to(device)
     logger.info(f"total_params: {total_params(model):,}")
 
     # Loss and optimizer
@@ -175,15 +175,11 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=cfg.trainparams.learning_rate,
-        weight_decay=cfg.trainparams.weight_decay,
+        weight_decay=cfg.trainparams.weight_decay if hasattr(cfg.trainparams, 'weight_decay') else 0.0,
     )
 
     # Cosine annealing scheduler
     scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2)
-
-    # Gradient clipping
-    max_grad_norm = 1.0
-    nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
 
     # Mixed precision training setup
     if device.type == "cuda":
@@ -209,6 +205,12 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
                 loss = criterion(outputs, labels)
 
             scaler.scale(loss).backward()
+
+            # Gradient clipping — unscale gradients before clipping
+            max_grad_norm = 1.0
+            scaler.unscale_(optimizer)
+            nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+
             scaler.step(optimizer)
             scaler.update()
 
