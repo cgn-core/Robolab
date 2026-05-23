@@ -10,6 +10,8 @@ trainparams:
   learning_rate: 1e-3
   num_epochs: 50
   weight_decay: 5e-3
+  criterion: CrossEntropyLoss
+  optimizer: AdamW
   dtype: float32
 
 testparams:

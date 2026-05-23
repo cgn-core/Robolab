@@ -21,13 +21,13 @@ Configuration:
 import torch
 import torch.amp as amp
 import torch.nn as nn
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, OneCycleLR
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from torch.utils.tensorboard import SummaryWriter
 
 from robolab.configs import cfg
 from robolab.data import train_loader, val_loader
 from robolab.eval import evaluate
-from robolab.models import ResNet18
+from robolab.models import model_factory
 from robolab.utils import get_device, logger, save_checkpoint, total_params
 
 
@@ -167,15 +167,15 @@ def train(checkpoint_dir: str = "checkpoints", data_root: str = "./data") -> Non
             torch.cuda.manual_seed_all(cfg.hyperparams.random_seed)
 
     # Model
-    model = ResNet18(num_classes=cfg.hyperparams.num_classes).to(device)
+    model = model_factory(num_classes=cfg.hyperparams.num_classes).to(device)
     logger.info(f"total_params: {total_params(model):,}")
 
     # Loss and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(
+    criterion = getattr(nn, cfg.trainparams.criterion)()
+    optimizer = getattr(torch.optim, cfg.trainparams.optimizer)(
         model.parameters(),
         lr=cfg.trainparams.learning_rate,
-        weight_decay=cfg.trainparams.weight_decay if hasattr(cfg.trainparams, 'weight_decay') else 0.0,
+        weight_decay=cfg.trainparams.weight_decay,
     )
 
     # Cosine annealing scheduler

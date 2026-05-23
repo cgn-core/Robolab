@@ -3393,3 +3393,28 @@ Total Test Samples: 10000
 Correct Predictions: 8948
 Overall Test Accuracy: 89.48 %
 F1 Score: 89.4514 %
+Starting evaluation on the test set...
+total_params: 11,173,962
+total_params: 11,173,962
+Epoch [1/50], Step [100/500], Loss: 1.6581
+Epoch [1/50], Step [200/500], Loss: 1.4860
+Epoch [1/50], Step [300/500], Loss: 1.2177
+Epoch [1/50], Step [400/500], Loss: 1.0807
+Epoch [1/50], Step [500/500], Loss: 1.1875
+Validation Accuracy of the model on the 5000 validation images: 0.58 %
+Checkpoint saved to checkpoints/model.ckpt
+New best validation accuracy: 57.58%
+Epoch [2/50], Step [100/500], Loss: 1.0447
+total_params: 11,173,962
+total_params: 11,173,962
+Epoch [1/50], Step [100/500], Loss: 1.7426
+total_params: 11,173,962
+Epoch [1/50], Step [100/500], Loss: 1.7426
+total_params: 11,173,962
+Epoch [1/50], Step [100/500], Loss: 1.6581
+Validation error at 'trainparams -> weight_deay': Extra inputs are not permitted (field: 'weight_deay')
+Unexpected field 'weight_deay' found in configuration. Please remove it.
+Did you mean one of: 'weight_decay', 'class_weights', 'criterion'?
+Validation error at 'trainparams -> num_epocs': Extra inputs are not permitted (field: 'num_epocs')
+Unexpected field 'num_epocs' found in configuration. Please remove it.
+Did you mean one of: 'num_epochs', 'warmup_epochs'?

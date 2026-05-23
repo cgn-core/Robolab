@@ -6,7 +6,7 @@ import torch.nn as nn
 
 class BasicBlock(nn.Module):
     """Basic ResNet block: two 3x3 conv layers with residual connection.
-    
+
     Unlike ResNet50's bottleneck design, ResNet18 uses simple 3x3→3x3 blocks
     which are more efficient for smaller networks and CIFAR datasets.
     """
@@ -35,9 +35,7 @@ class BasicBlock(nn.Module):
             in_channels, out_channels, 3, stride, padding=1, bias=False
         )
         self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(
-            out_channels, out_channels, 3, 1, padding=1, bias=False
-        )
+        self.conv2 = nn.Conv2d(out_channels, out_channels, 3, 1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
 
@@ -66,7 +64,7 @@ class BasicBlock(nn.Module):
 
 class ResNet18(nn.Module):
     """ResNet-18 network architecture for CIFAR-10.
-    
+
     Architecture overview:
         - Initial stem: 3x3 conv (64 ch)
         - Stage 1 (C1): 2x basic blocks, base channels 64, output 64 ch
@@ -74,7 +72,7 @@ class ResNet18(nn.Module):
         - Stage 3 (C3): 2x basic blocks, base channels 256, output 256 ch
         - Stage 4 (C4): 2x basic blocks, base channels 512, output 512 ch
         - Classification: global average pool + linear
-    
+
     Total layers: 1 (stem conv) + 8 (basic blocks * 2 conv) + 1 (fc) = 18 conv layers
     """
 
@@ -102,24 +100,16 @@ class ResNet18(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
         # Define channels for each stage
-        self.layer1_channels = 64   # output = 64 * 1 = 64
+        self.layer1_channels = 64  # output = 64 * 1 = 64
         self.layer2_channels = 128  # output = 128 * 1 = 128
         self.layer3_channels = 256  # output = 256 * 1 = 256
         self.layer4_channels = 512  # output = 512 * 1 = 512
 
         # Stages: stride=2 for downsampling on first block of each stage
-        self.layer1 = self._make_layer(
-            block, self.layer1_channels, layers[0], stride=1
-        )
-        self.layer2 = self._make_layer(
-            block, self.layer2_channels, layers[1], stride=2
-        )
-        self.layer3 = self._make_layer(
-            block, self.layer3_channels, layers[2], stride=2
-        )
-        self.layer4 = self._make_layer(
-            block, self.layer4_channels, layers[3], stride=2
-        )
+        self.layer1 = self._make_layer(block, self.layer1_channels, layers[0], stride=1)
+        self.layer2 = self._make_layer(block, self.layer2_channels, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, self.layer3_channels, layers[2], stride=2)
+        self.layer4 = self._make_layer(block, self.layer4_channels, layers[3], stride=2)
 
         # Final classification head
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
@@ -146,26 +136,29 @@ class ResNet18(nn.Module):
         Returns:
             nn.Sequential containing the blocks.
         """
+
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
 
         for i, s in enumerate(strides):
             # Create downsample module only for the first block
-            if i == 0 and (stride != 1 or self.in_channels != channels * block.expansion):
+            if i == 0 and (
+                stride != 1 or self.in_channels != channels * block.expansion
+            ):
                 downsample = nn.Sequential(
                     nn.Conv2d(
                         self.in_channels,
                         channels * block.expansion,
-                        1, stride, bias=False,
+                        1,
+                        stride,
+                        bias=False,
                     ),
                     nn.BatchNorm2d(channels * block.expansion),
                 )
             else:
                 downsample = None
 
-            layers.append(
-                block(self.in_channels, channels, s, downsample)
-            )
+            layers.append(block(self.in_channels, channels, s, downsample))
             self.in_channels = channels * block.expansion
 
         return nn.Sequential(*layers)
@@ -207,14 +200,6 @@ class ResNet18(nn.Module):
         return x
 
 
-def resnet18(num_classes: int = 10, **kwargs) -> ResNet18:
-    """Construct ResNet-18.
-
-    Args:
-        num_classes: Number of output classes (default 10 for CIFAR-10).
-        **kwargs: Additional arguments passed to ResNet18 constructor.
-
-    Returns:
-        ResNet18 model instance.
-    """
-    return ResNet18(num_classes=num_classes, **kwargs)
+def model_factory(num_classes: int = 10) -> nn.Module:
+    """Factory function to create a ResNet18 model instance."""
+    return ResNet18(num_classes=num_classes)

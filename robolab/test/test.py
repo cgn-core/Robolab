@@ -7,7 +7,7 @@ full CIFAR-10 test set, logging overall and per-class metrics.
 from robolab.configs import cfg
 from robolab.data import test_loader
 from robolab.eval import evaluate
-from robolab.models import ResNet18
+from robolab.models import model_factory
 from robolab.utils import (
     get_device,
     load_checkpoint,
@@ -39,7 +39,7 @@ def test(
     device = get_device()
 
     # Instantiate model architecture and restore weights from checkpoint
-    model = ResNet18(num_classes=cfg.hyperparams.num_classes).to(device)
+    model = model_factory(num_classes=cfg.hyperparams.num_classes).to(device)
     load_checkpoint(
         model=model,
         checkpoint_path=checkpoint_path,
