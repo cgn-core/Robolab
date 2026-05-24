@@ -4,6 +4,40 @@ import torch
 import torch.nn as nn
 
 
+class SEBlock(nn.Module):
+    """Squeeze-and-Excitation (SE) block for channel-wise attention.
+
+    This block adaptively recalibrates channel-wise feature responses by
+    explicitly modeling interdependencies between channels. It consists of:
+        - Squeeze: Global average pooling to create a channel descriptor.
+        - Excitation: Two fully connected layers to capture channel relationships.
+        - Scale: Reweight the original feature maps by the learned channel weights.
+    """
+
+    def __init__(self, channels: int, reduction: int = 16) -> None:
+        """Initialize SEBlock.
+
+        Args:
+            channels: Number of input channels.
+            reduction: Reduction ratio for the bottleneck in the excitation step.
+        """
+        super().__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Sequential(
+            nn.Linear(channels, channels // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels // reduction, channels, bias=False),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through SE block."""
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x).view(b, c)
+        y = self.fc(y).view(b, c, 1, 1)
+        return x * y.expand_as(x)
+
+
 class BasicBlock(nn.Module):
     """Basic ResNet block: two 3x3 conv layers with residual connection.
 
@@ -39,6 +73,9 @@ class BasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
 
+        # SE block for channel attention (optional, can be commented out if not needed)
+        self.se = SEBlock(out_channels, reduction=4)
+
         # Shortcut path
         self.downsample = downsample
 
@@ -56,6 +93,7 @@ class BasicBlock(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
+        out = self.se(out)
         out += identity
         out = self.relu(out)
 
