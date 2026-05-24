@@ -1,9 +1,4 @@
-"""Dataset loading and preprocessing for CIFAR-10.
-
-This module defines data loading pipelines for CIFAR-10, including
-training transforms with data augmentation, normalization parameters,
-and train/validation/test data split utilities.
-"""
+from copy import deepcopy
 
 import torch
 import torchvision
@@ -12,11 +7,9 @@ from torch.utils.data import random_split
 
 from robolab.configs import cfg
 
-# Normalization statistics for CIFAR-10: computed from training set mean/std
 _CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
 _CIFAR10_STD = (0.2470, 0.2435, 0.2616)
 
-# Training transforms: CIFAR-10 standard data augmentation pipeline
 train_transforms = transforms.Compose(
     [
         transforms.RandomCrop(32, padding=4),
@@ -26,7 +19,6 @@ train_transforms = transforms.Compose(
     ]
 )
 
-# Test/validation transforms: same normalization without augmentation
 test_transforms = transforms.Compose(
     [
         transforms.ToTensor(),
@@ -34,35 +26,36 @@ test_transforms = transforms.Compose(
     ]
 )
 
-# Load full CIFAR-10 training set with data augmentation transforms
-train_dataset = torchvision.datasets.CIFAR10(
-    root="./data", train=True, transform=train_transforms, download=True
+base_train_dataset = torchvision.datasets.CIFAR10(
+    root="./data", train=True, transform=None, download=True
 )
 
-# Load CIFAR-10 test set with evaluation-only transforms
 test_dataset = torchvision.datasets.CIFAR10(
     root="./data", train=False, transform=test_transforms, download=True
 )
 
-# Create shuffled training data loader with pinned memory for faster GPU transfer
+generator = torch.Generator().manual_seed(42)
+val_size = int(0.1 * len(base_train_dataset))
+train_size = len(base_train_dataset) - val_size
+
+train_dataset, val_dataset = random_split(
+    base_train_dataset, [train_size, val_size], generator=generator
+)
+
+train_dataset = deepcopy(train_dataset)
+val_dataset = deepcopy(val_dataset)
+
+train_dataset.dataset.transform = train_transforms
+val_dataset.dataset.transform = test_transforms
+
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=cfg.trainparams.batch_size, shuffle=True, pin_memory=True
 )
 
-# Create test data loader with deterministic ordering
-test_loader = torch.utils.data.DataLoader(
-    test_dataset, batch_size=cfg.trainparams.batch_size, shuffle=False, pin_memory=True
-)
-
-# Deterministic split of training set into train/validation subsets
-generator = torch.Generator().manual_seed(42)
-val_size = int(0.1 * len(train_dataset))
-train_size = len(train_dataset) - val_size
-_, val_dataset = random_split(
-    train_dataset, [train_size, val_size], generator=generator
-)
-
-# Create validation data loader with deterministic ordering
 val_loader = torch.utils.data.DataLoader(
     val_dataset, batch_size=cfg.trainparams.batch_size, shuffle=False, pin_memory=True
+)
+
+test_loader = torch.utils.data.DataLoader(
+    test_dataset, batch_size=cfg.trainparams.batch_size, shuffle=False, pin_memory=True
 )

@@ -3,7 +3,7 @@ hyperparams:
   checkpoint_dir: checkpoints
   random_seed: 42
   num_classes: 10
-  early_stopping_patience: 5
+  early_stopping_patience: 10
 
 trainparams:
   batch_size: 100
