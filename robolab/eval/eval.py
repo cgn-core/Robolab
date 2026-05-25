@@ -5,9 +5,11 @@ on CIFAR-10 datasets, computing accuracy, F1 score, confusion
 matrix, and classification reports using scikit-learn.
 """
 
+import numpy as np
 import torch
 from sklearn.metrics import (
     accuracy_score,
+    brier_score_loss,
     classification_report,
     confusion_matrix,
     f1_score,
@@ -18,7 +20,10 @@ from robolab.utils import get_device
 
 
 def evaluate(
-    model: nn.Module, data_loader: torch.utils.data.DataLoader, dtype: str
+    model: nn.Module,
+    data_loader: torch.utils.data.DataLoader,
+    dtype: str,
+    target_class: int = 1,
 ) -> dict:
     """Evaluate the trained model and return detailed metrics.
 
@@ -30,6 +35,7 @@ def evaluate(
         data_loader: The data loader for the test or validation set.
         dtype: Data type string for tensor operations
             (e.g., ``"float32"``, ``"float16"``).
+        target_class: The class for which to compute the Brier score.
 
     Returns:
         Dictionary containing the following keys:
@@ -39,13 +45,15 @@ def evaluate(
         - ``"confusion_matrix"``: Confusion matrix as a NumPy array.
         - ``"classification_report"``: Per-class precision/recall/F1 report.
     """
+
     # Disable gradient computation and set model to inference mode
     model.eval()
     device = get_device()
 
     # Accumulators for batched predictions and ground-truth labels
-    all_preds: list[int] = []
-    all_labels: list[int] = []
+    all_preds_list: list[np.ndarray] = []
+    all_labels_list: list[np.ndarray] = []
+    all_probs_list: list[np.ndarray] = []
 
     with torch.no_grad():
         for images, labels in data_loader:
@@ -54,23 +62,32 @@ def evaluate(
 
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
+            probs = torch.softmax(outputs.data, dim=1)
 
-            all_preds.extend(predicted.cpu())
-            all_labels.extend(labels.cpu())
+            all_preds_list.append(predicted.cpu().numpy())
+            all_labels_list.append(labels.cpu().numpy())
+            all_probs_list.append(probs.cpu().numpy())
 
-    all_preds = torch.stack(all_preds).numpy()
-    all_labels = torch.stack(all_labels).numpy()
+    # Concatenate batch-wise predictions and labels into single arrays
+    all_preds = np.concatenate(all_preds_list)
+    all_labels = np.concatenate(all_labels_list)
+    all_probs = np.concatenate(all_probs_list)
 
-    # Compute overall accuracy, macro F1 score, confusion matrix,
-    # and classification report
+    # Compute evaluation metrics using scikit-learn
     acc = accuracy_score(all_labels, all_preds)
     f1 = f1_score(all_labels, all_preds, average="macro")
     cm = confusion_matrix(all_labels, all_preds)
     cr = classification_report(all_labels, all_preds)
+
+    # Compute Brier score for the specified target class
+    true_binary = (all_labels == target_class).astype(int)
+    pred_confidence = all_probs[:, target_class]
+    brier = brier_score_loss(true_binary, pred_confidence)
 
     return {
         "accuracy": acc,
         "f1_score": f1,
         "confusion_matrix": cm,
         "classification_report": cr,
+        "brier_score": brier,
     }

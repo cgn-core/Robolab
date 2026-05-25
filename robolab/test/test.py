@@ -56,6 +56,7 @@ def test(
         "f1_score": metrics["f1_score"],
         "confusion_matrix": metrics["confusion_matrix"],
         "classification_report": metrics["classification_report"],
+        "brier_score": metrics["brier_score"],
     }
 
     # Log key evaluation results to console and file
@@ -63,6 +64,7 @@ def test(
     logger.info(f"Correct Predictions: {metrics['correct_predictions']}")
     logger.info(f"Overall Test Accuracy: {metrics['overall_accuracy'] * 100:.2f} %")
     logger.info(f"F1 Score: {metrics['f1_score'] * 100:.4f} %")
+    logger.info(f"Brier Score: {metrics['brier_score']:.4f}")
 
     return metrics
 

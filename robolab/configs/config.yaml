@@ -6,9 +6,9 @@ hyperparams:
   early_stopping_patience: 10
 
 trainparams:
-  batch_size: 100
+  batch_size: 128
   learning_rate: 1e-3
-  num_epochs: 50
+  num_epochs: 100
   weight_decay: 5e-3
   criterion: CrossEntropyLoss
   optimizer: AdamW
@@ -16,3 +16,8 @@ trainparams:
 
 testparams:
   dtype: float32
+
+dataset:
+  name: CIFAR10
+  train_split: 0.9
+  validation_split: 0.1

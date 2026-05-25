@@ -10,6 +10,24 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from robolab.utils import logger
 
 
+class DatasetConfig(BaseModel):
+    """Dataset configuration.
+
+    Attributes:
+        name: Name of the dataset (e.g., "CIFAR10").
+        train_split: Proportion of the dataset to use for training (0.0 to 1.0).
+        validation_split: Proportion of the dataset to use for validation (0.0 to 1.0).
+        test_split: Proportion of the dataset to use for testing (0.0 to 1.0).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: Literal["CIFAR10"] = "CIFAR10"
+    train_split: float = Field(ge=0.0, le=1.0, default=0.9)
+    validation_split: float = Field(ge=0.0, le=1.0, default=0.1)
+    test_split: float = Field(ge=0.0, le=1.0, default=0.0)
+
+
 class Hyperparameters(BaseModel):
     """Hyperparameters configuration.
 
@@ -79,6 +97,7 @@ class Config(BaseModel):
         hyperparams: Common hyperparameters shared across modules.
         trainparams: Training-specific hyperparameters.
         testparams: Testing/evaluation-specific hyperparameters.
+        dataset: Dataset configuration (e.g., name, splits).
 
     Example:
         Load from YAML (global singleton):
@@ -91,6 +110,7 @@ class Config(BaseModel):
         ...     hyperparams=Hyperparameters(num_classes=10),
         ...     trainparams=TrainingParams(),
         ...     testparams=TestingParams(),
+        ...     dataset=DatasetConfig()
         ... )
     """
 
@@ -99,6 +119,7 @@ class Config(BaseModel):
     hyperparams: Hyperparameters = Field(default_factory=Hyperparameters)
     trainparams: TrainingParams = Field(default_factory=TrainingParams)
     testparams: TestingParams = Field(default_factory=TestingParams)
+    dataset: DatasetConfig = Field(default_factory=DatasetConfig)
 
     @classmethod
     def load_from_yaml(cls, path: str | None = None) -> "Config":
@@ -128,11 +149,9 @@ class Config(BaseModel):
         try:
             return cls(**config_data)
         except ValidationError as e:
-            # Tüm doğrulama hatalarını topla
             errors = e.errors()
 
             for error in errors:
-                # Pydantic v2'de loc bir dict olabilir, tuple olarak ele al
                 loc_list = error.get("loc", [])
                 location = " -> ".join(str(loc) for loc in loc_list)
                 wrong_field = loc_list[-1] if loc_list else "unknown"
@@ -148,7 +167,6 @@ class Config(BaseModel):
                         f"Unexpected field '{wrong_field}' found "
                         "in configuration. Please remove it."
                     )
-                    # Suggested fields from the parent model
                     parent_model_path = loc_list[:-1]
                     if parent_model_path:
                         current_model = cls
@@ -158,11 +176,9 @@ class Config(BaseModel):
                                 and loc in current_model.model_fields
                             ):
                                 field_type = current_model.model_fields[loc].annotation
-                                # Handle AnnotationType like "Hyperparameters" or "TrainingParams"
                                 if hasattr(field_type, "__annotations__"):
                                     current_model = field_type
                                 elif hasattr(field_type, "__origin__"):
-                                    # Handle Union types like str | None
                                     if hasattr(field_type, "__args__"):
                                         for arg in field_type.__args__:
                                             if hasattr(arg, "__annotations__"):
@@ -177,17 +193,16 @@ class Config(BaseModel):
                                 cutoff=0.3,
                             )
                             if suggestions:
-                                logger.error(
-                                    f"Did you mean one of: {', '.join(repr(s) for s in suggestions)}?"
-                                )
+                                suggestion_str = ", ".join(repr(s) for s in suggestions)
+                                logger.error(f"Did you mean one of: {suggestion_str}?")
                             else:
                                 logger.error(
                                     f"No close matches found for '{wrong_field}'. "
-                                    f"Valid fields in '{current_model.__name__}' are: {valid_fields}"
+                                    f"Valid fields in '{current_model.__name__}' are: "
+                                    f"{valid_fields}"
                                 )
 
                 elif error_type == "value_error":
-                    # Value constraint errors (e.g., ge, gt, literal)
                     logger.error(
                         f"Invalid value for '{wrong_field}'. "
                         f"Please check the constraint and try again."
