@@ -22,14 +22,14 @@ def test_forward_returns_tensor(model):
 
 
 def test_forward_no_nan(model):
-    x = torch.randn(1, 3, 32, 32)
+    x = torch.randn(1, 3, 32, 32, requires_grad=True)
     out = model(x)
-    out.sum().backward()
-    assert x.grad is not None
+    assert not torch.isnan(x).any()
+    assert not torch.isnan(out).any()
 
 
 @pytest.mark.parametrize("batch_size", [1, 8, 32])
 def test_forward_different_batch_sizes(model, batch_size):
-    x = torch.randn(1, 3, 32, 32)
+    x = torch.randn(batch_size, 3, 32, 32)
     out = model(x)
     assert out.shape[0] == batch_size

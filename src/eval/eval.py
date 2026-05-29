@@ -16,13 +16,12 @@ from sklearn.metrics import (
 )
 from torch import nn
 
-from utils import get_device
-
 
 def evaluate(
     model: nn.Module,
+    device: torch.device,
     data_loader: torch.utils.data.DataLoader,
-    dtype: str,
+    dtype: str | torch.dtype,
     target_class: int = 1,
 ) -> dict:
     """Evaluate the trained model and return detailed metrics.
@@ -46,25 +45,32 @@ def evaluate(
         - ``"classification_report"``: Per-class precision/recall/F1 report.
     """
 
-    # Test
-    assert model is not None, "Model cannot be None"
-    assert data_loader is not None, "Data loader cannot be None"
+    # Set dtype
+    resolved_dtype = getattr(torch, dtype) if isinstance(dtype, str) else dtype
+
+    # Validate inputs
+    if model is None:
+        raise ValueError("Model cannot be None")
+    if data_loader is None:
+        raise ValueError("Data loader cannot be None")
 
     # Disable gradient computation and set model to inference mode
     model.eval()
-    device = get_device()
+    model = model.to(device, dtype=resolved_dtype)
 
     # Accumulators for batched predictions and ground-truth labels
     all_preds_list: list[np.ndarray] = []
     all_labels_list: list[np.ndarray] = []
     all_probs_list: list[np.ndarray] = []
 
+    autocast_ctx = torch.amp.autocast(device.type, resolved_dtype)
+
     with torch.no_grad():
         for images, labels in data_loader:
-            images = images.to(device, dtype=getattr(torch, dtype))
+            images = images.to(device)
             labels = labels.to(device)
 
-            with torch.amp.autocast(device.type, dtype=getattr(torch, dtype)):
+            with autocast_ctx:
                 outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
             probs = torch.softmax(outputs.data, dim=1)
@@ -83,9 +89,9 @@ def evaluate(
 
     # Compute evaluation metrics using scikit-learn
     acc = accuracy_score(all_labels, all_preds)
-    f1 = f1_score(all_labels, all_preds, average="macro")
+    f1 = f1_score(all_labels, all_preds, average="macro", zero_division=0)
     cm = confusion_matrix(all_labels, all_preds)
-    cr = classification_report(all_labels, all_preds)
+    cr = classification_report(all_labels, all_preds, zero_division=0)
 
     # Compute Brier score for the specified target class
     true_binary = (all_labels == target_class).astype(int)

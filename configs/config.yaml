@@ -13,6 +13,8 @@ trainparams:
   criterion: CrossEntropyLoss
   optimizer: AdamW
   dtype: float16
+  warmup_epochs: 5
+  max_grad_norm: 1.0
 
 testparams:
   dtype: float32
@@ -21,3 +23,4 @@ dataset:
   name: CIFAR10
   train_split: 0.9
   validation_split: 0.1
+  test_split: 0.0
